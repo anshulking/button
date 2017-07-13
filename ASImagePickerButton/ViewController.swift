@@ -8,10 +8,14 @@
 
 import UIKit
 
-class ViewController: UIViewController {
+class ViewController: UIViewController, pickerButtonDelegate {
 
+    @IBOutlet var imagepickerButton: PickerButton!
+    @IBOutlet var mainImageView: UIImageView!
     override func viewDidLoad() {
         super.viewDidLoad()
+        imagepickerButton.delegate = self
+        imagepickerButton.setupButtonFor(viewController: self, pickerType: .cameraRoll)
         // Do any additional setup after loading the view, typically from a nib.
     }
 
@@ -19,7 +23,8 @@ class ViewController: UIViewController {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
     }
-
-
+    func pickerButtonDidGetImage(_ image: UIImage) {
+        mainImageView.image = image
+    }
 }
 
