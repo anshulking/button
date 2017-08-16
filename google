@@ -1,6 +1,14 @@
+//
+//  WebServices.swift
+//  GooglePlacesApiCalls
+//
+//  Created by MAC238 on 7/18/17.
+//  Copyright © 2017 tatvasoft. All rights reserved.
+//
 
 import Foundation
 import Alamofire
+import AlamofireImage
 import MapKit
 class PlacesList{
     public var nextPageToken: String = ""
@@ -43,6 +51,48 @@ class Place{
     
 }
 
+class PlaceDetails{
+    public var name: String = ""
+    public var address: String = ""
+    public var phoneNumber: String = ""
+    public var isOpenNow: String = ""
+    public var photosRefreneces: [String] = []
+    public var rating: String = ""
+    public var website: String = ""
+    public init(_ dictionary: NSDictionary){
+        if let temp = dictionary.value(forKeyPath: "result.name") as? String{
+            name = temp
+        }
+        if let temp = dictionary.value(forKeyPath: "result.vicinity") as? String{
+            address = temp 
+        }
+        if let temp = dictionary.value(forKeyPath: "result.international_phone_number") as? String{
+            phoneNumber = temp
+        }
+        if let temp = dictionary.value(forKeyPath: "result.opening_hours.open_now") as? Bool{
+            if temp{
+                isOpenNow = "Open Now"
+            }else{
+                isOpenNow = "Closed Now"
+            }
+        }
+        if let photos = dictionary.value(forKeyPath: "result.photos") as? [Any]{
+            if photos.count != 0{
+                for i in 0...photos.count - 1{
+                    let dic = photos[i] as! NSDictionary
+                    self.photosRefreneces.append(dic.value(forKey: "photo_reference") as! String)
+                }
+            }
+        }
+        if let temp = dictionary.value(forKeyPath: "result.rating") as? CGFloat{
+            rating = String(describing: temp)
+        }
+        if let temp = dictionary.value(forKeyPath: "result.website") as? String{
+            website = temp
+        }
+    }
+}
+
 class Webservices {
     class func getGooglePlacesList(_ type: String, success: @escaping (_ placeList: PlacesList)->Void){
         var urlRequest: URLRequest = URLRequest.init(url: URL(string: "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=23.0345116,72.5063882&radius=1000&types=food&key=AIzaSyB7yYN2Wtc7PEkneyWfVmF1SXVQomcT9k0")!, cachePolicy: URLRequest.CachePolicy.useProtocolCachePolicy, timeoutInterval: 10.0)
@@ -60,6 +110,22 @@ class Webservices {
             let responseDictionary = jsonResponse.result.value as! NSDictionary
             let placesList: PlacesList = PlacesList.init(responseDictionary)
             success(placesList)
+        }
+    }
+    class func detailsAboutPlace(_ placeID: String, success: @escaping (_ plcaeDetails: PlaceDetails)->Void){
+        var urlRequest: URLRequest = URLRequest.init(url: URL(string: "https://maps.googleapis.com/maps/api/place/details/json?placeid=\(placeID)&key=AIzaSyB7yYN2Wtc7PEkneyWfVmF1SXVQomcT9k0")!, cachePolicy: URLRequest.CachePolicy.useProtocolCachePolicy, timeoutInterval: 10.0)
+        urlRequest.httpMethod = "Get"
+        Alamofire.request(urlRequest).responseJSON { (jsonResponse) in
+            let responseDictionary = jsonResponse.result.value as! NSDictionary
+            let placeDetails: PlaceDetails = PlaceDetails.init(responseDictionary)
+            success(placeDetails)
+        }
+    }
+    class func getImage(_ imageRefrence: String, success: @escaping (_ image: UIImage)->Void){
+        Alamofire.request("https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=\(imageRefrence)&key=AIzaSyB7yYN2Wtc7PEkneyWfVmF1SXVQomcT9k0").responseImage { response in
+            if let image = response.result.value {
+                success(image)
+            }
         }
     }
 }
